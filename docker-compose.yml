@@ -46,7 +46,8 @@ services:
       MQTT_USERNAME: weather_device
       MQTT_PASSWORD: strong_password
     command: >
-      sh -c "mosquitto_passwd -b -c /mosquitto/data/passwd \"$${MQTT_USERNAME}\" \"$${MQTT_PASSWORD}\"
+      sh -c "touch /mosquitto/data/passwd
+      && mosquitto_passwd -b /mosquitto/data/passwd \"$${MQTT_USERNAME}\" \"$${MQTT_PASSWORD}\"
       && exec mosquitto -c /mosquitto/config/mosquitto.conf"
     volumes:
       - ./backend/mosquitto/dokploy.conf:/mosquitto/config/mosquitto.conf:ro
@@ -54,7 +55,7 @@ services:
       - mqtt-log:/mosquitto/log
     expose:
       - 1883
-      - 9001
+      - 3000
     restart: unless-stopped
 
 volumes:

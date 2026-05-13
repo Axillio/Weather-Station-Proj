@@ -73,9 +73,9 @@ python demo/python/mqtt_weather_simulator.py \
 The Dokploy compose runs Mosquitto with:
 
 - internal MQTT/TCP on `1883` for the backend container
-- external MQTT-over-WebSockets on `9001` for local simulator scripts
+- external MQTT-over-WebSockets on container port `3000` for local simulator scripts
 
-Point a Dokploy domain or route at the `mqtt` service on port `9001`, then run the simulator over WSS:
+Point a Dokploy domain or route at the `mqtt` service on port `3000`, then run the simulator over WSS:
 
 ```bash
 python demo/python/mqtt_weather_simulator.py \
