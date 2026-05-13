@@ -52,10 +52,10 @@ services:
     command: >
       sh -c "touch /mosquitto/data/passwd
       && chown root:root /mosquitto/data/passwd
-      && chmod 640 /mosquitto/data/passwd
+      && chmod 644 /mosquitto/data/passwd
       && mosquitto_passwd -b /mosquitto/data/passwd \"$${MQTT_USERNAME}\" \"$${MQTT_PASSWORD}\"
       && chown root:root /mosquitto/data/passwd
-      && chmod 640 /mosquitto/data/passwd
+      && chmod 644 /mosquitto/data/passwd
       && exec mosquitto -c /mosquitto/config/mosquitto.conf"
     volumes:
       - ./backend/mosquitto/dokploy.conf:/mosquitto/config/mosquitto.conf:ro
