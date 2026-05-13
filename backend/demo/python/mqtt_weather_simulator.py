@@ -73,7 +73,7 @@ class SensorState:
             "rain": self.rain_raw < 1400,
             "rssi_dbm": self.rssi_dbm,
             "battery_mv": self.battery_mv,
-            "fw_version": "esp32-weather-fw-1.1.0",
+            "fw_version": "WS-ESP32 v1.1.0",
         }
 
 
