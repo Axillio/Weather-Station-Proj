@@ -8,6 +8,7 @@ import json
 import math
 import random
 import signal
+import ssl
 import sys
 import time
 from dataclasses import dataclass
@@ -21,6 +22,9 @@ class SimConfig:
     mqtt_port: int
     mqtt_username: str | None
     mqtt_password: str | None
+    mqtt_transport: str
+    mqtt_tls: bool
+    mqtt_websocket_path: str
     device_id: str
     interval: float
     start_seq: int
@@ -75,6 +79,9 @@ def main() -> int:
     parser.add_argument("--mqtt-port", type=int, default=1883)
     parser.add_argument("--mqtt-username", default=None)
     parser.add_argument("--mqtt-password", default=None)
+    parser.add_argument("--mqtt-transport", choices=["tcp", "websockets"], default="tcp")
+    parser.add_argument("--mqtt-tls", action="store_true", help="Use TLS. Required for wss:// routes.")
+    parser.add_argument("--mqtt-websocket-path", default="/mqtt")
     parser.add_argument("--device-id", default="ws-esp32-001")
     parser.add_argument("--interval", type=float, default=5.0)
     parser.add_argument("--start-seq", type=int, default=1)
@@ -85,6 +92,9 @@ def main() -> int:
         mqtt_port=args.mqtt_port,
         mqtt_username=args.mqtt_username,
         mqtt_password=args.mqtt_password,
+        mqtt_transport=args.mqtt_transport,
+        mqtt_tls=args.mqtt_tls,
+        mqtt_websocket_path=args.mqtt_websocket_path,
         device_id=args.device_id,
         interval=args.interval,
         start_seq=args.start_seq,
@@ -99,9 +109,17 @@ def main() -> int:
     signal.signal(signal.SIGINT, handle_signal)
     signal.signal(signal.SIGTERM, handle_signal)
 
-    client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2, client_id=f"python-sim-{config.device_id}")
+    client = mqtt.Client(
+        mqtt.CallbackAPIVersion.VERSION2,
+        client_id=f"python-sim-{config.device_id}",
+        transport=config.mqtt_transport,
+    )
     if config.mqtt_username:
         client.username_pw_set(config.mqtt_username, config.mqtt_password)
+    if config.mqtt_transport == "websockets":
+        client.ws_set_options(path=config.mqtt_websocket_path)
+    if config.mqtt_tls:
+        client.tls_set(cert_reqs=ssl.CERT_REQUIRED)
 
     def on_connect(_client: mqtt.Client, _userdata: object, _flags: object, reason_code: object, _properties: object) -> None:
         print(f"[MQTT] connected rc={reason_code}")
@@ -119,7 +137,7 @@ def main() -> int:
     client.on_connect = on_connect
     client.on_message = on_message
 
-    print(f"[MQTT] connecting to {config.mqtt_host}:{config.mqtt_port}")
+    print(f"[MQTT] connecting to {config.mqtt_host}:{config.mqtt_port} via {config.mqtt_transport}")
     client.connect(config.mqtt_host, config.mqtt_port, keepalive=60)
     client.loop_start()
 

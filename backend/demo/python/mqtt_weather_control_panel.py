@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import ssl
 import threading
 import time
 from http import HTTPStatus
@@ -277,6 +278,9 @@ class SimulatorState:
         mqtt_port: int,
         mqtt_username: str | None,
         mqtt_password: str | None,
+        mqtt_transport: str,
+        mqtt_tls: bool,
+        mqtt_websocket_path: str,
         device_id: str,
         api_base_url: str,
         mode: str,
@@ -301,9 +305,17 @@ class SimulatorState:
 
         self.client: mqtt.Client | None = None
         if self.mode == "mqtt":
-            client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2, client_id=f"panel-sim-{device_id}")
+            client = mqtt.Client(
+                mqtt.CallbackAPIVersion.VERSION2,
+                client_id=f"panel-sim-{device_id}",
+                transport=mqtt_transport,
+            )
             if mqtt_username:
                 client.username_pw_set(mqtt_username, mqtt_password)
+            if mqtt_transport == "websockets":
+                client.ws_set_options(path=mqtt_websocket_path)
+            if mqtt_tls:
+                client.tls_set(cert_reqs=ssl.CERT_REQUIRED)
             client.connect(mqtt_host, mqtt_port, keepalive=60)
             client.loop_start()
             self.client = client
@@ -430,6 +442,9 @@ def main() -> int:
     parser.add_argument("--mqtt-port", type=int, default=1883)
     parser.add_argument("--mqtt-username", default=None)
     parser.add_argument("--mqtt-password", default=None)
+    parser.add_argument("--mqtt-transport", choices=["tcp", "websockets"], default="tcp")
+    parser.add_argument("--mqtt-tls", action="store_true", help="Use TLS. Required for wss:// routes.")
+    parser.add_argument("--mqtt-websocket-path", default="/mqtt")
     parser.add_argument("--device-id", default="ws-esp32-001")
     parser.add_argument("--port", type=int, default=8765, help="HTTP port for the local control panel")
     parser.add_argument("--api-base-url", default="http://127.0.0.1:8000", help="Backend API base URL for HTTP fallback")
@@ -441,6 +456,9 @@ def main() -> int:
         args.mqtt_port,
         args.mqtt_username,
         args.mqtt_password,
+        args.mqtt_transport,
+        args.mqtt_tls,
+        args.mqtt_websocket_path,
         args.device_id,
         args.api_base_url,
         args.mode,

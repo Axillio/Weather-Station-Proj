@@ -28,7 +28,7 @@ So the demo chain becomes:
 Use the same Python environment as the backend:
 
 ```bash
-cd /Users/mag/Documents/Codex/Iot_proj/IOTProj/backend
+cd backend
 source .venv/bin/activate
 python demo/python/mqtt_weather_simulator.py --mqtt-host broker.hivemq.com
 ```
@@ -38,7 +38,7 @@ python demo/python/mqtt_weather_simulator.py --mqtt-host broker.hivemq.com
 If you want a demo where you manually adjust values like a virtual circuit:
 
 ```bash
-cd /Users/mag/Documents/Codex/Iot_proj/IOTProj/backend
+cd backend
 source .venv/bin/activate
 python demo/python/mqtt_weather_control_panel.py --mqtt-host broker.hivemq.com
 ```
@@ -64,6 +64,37 @@ If your broker requires authentication:
 ```bash
 python demo/python/mqtt_weather_simulator.py \
   --mqtt-host 192.168.137.1 \
+  --mqtt-username weather_device \
+  --mqtt-password strong_password
+```
+
+## Dokploy MQTT over WebSockets
+
+The Dokploy compose runs Mosquitto with:
+
+- internal MQTT/TCP on `1883` for the backend container
+- external MQTT-over-WebSockets on `9001` for local simulator scripts
+
+Point a Dokploy domain or route at the `mqtt` service on port `9001`, then run the simulator over WSS:
+
+```bash
+python demo/python/mqtt_weather_simulator.py \
+  --mqtt-host YOUR_MQTT_DOMAIN \
+  --mqtt-port 443 \
+  --mqtt-transport websockets \
+  --mqtt-tls \
+  --mqtt-username weather_device \
+  --mqtt-password strong_password
+```
+
+For the browser control panel:
+
+```bash
+python demo/python/mqtt_weather_control_panel.py \
+  --mqtt-host YOUR_MQTT_DOMAIN \
+  --mqtt-port 443 \
+  --mqtt-transport websockets \
+  --mqtt-tls \
   --mqtt-username weather_device \
   --mqtt-password strong_password
 ```
@@ -96,13 +127,13 @@ Open [http://127.0.0.1:3000](http://127.0.0.1:3000)
 
 ## Minimal Backend MQTT Settings
 
-For the public broker route, set [backend/.env](/Users/mag/Documents/Codex/Iot_proj/IOTProj/backend/.env) like this:
+For Docker/Dokploy, set these in the root `docker-compose.yml`:
 
 ```env
-MQTT_HOST=broker.hivemq.com
+MQTT_HOST=mqtt
 MQTT_PORT=1883
-MQTT_USERNAME=
-MQTT_PASSWORD=
+MQTT_USERNAME=weather_device
+MQTT_PASSWORD=strong_password
 MQTT_TLS=false
 DEFAULT_DEVICE_ID=ws-esp32-001
 RUN_MQTT_WORKER=true

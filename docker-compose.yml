@@ -21,6 +21,9 @@ services:
       - weather-data:/app/data
     expose:
       - 8000
+    depends_on:
+      mqtt:
+        condition: service_started
     restart: unless-stopped
 
   frontend:
@@ -37,5 +40,24 @@ services:
         condition: service_started
     restart: unless-stopped
 
+  mqtt:
+    image: eclipse-mosquitto:2
+    environment:
+      MQTT_USERNAME: weather_device
+      MQTT_PASSWORD: strong_password
+    command: >
+      sh -c "mosquitto_passwd -b -c /mosquitto/data/passwd \"$${MQTT_USERNAME}\" \"$${MQTT_PASSWORD}\"
+      && exec mosquitto -c /mosquitto/config/mosquitto.conf"
+    volumes:
+      - ./backend/mosquitto/dokploy.conf:/mosquitto/config/mosquitto.conf:ro
+      - mqtt-data:/mosquitto/data
+      - mqtt-log:/mosquitto/log
+    expose:
+      - 1883
+      - 9001
+    restart: unless-stopped
+
 volumes:
   weather-data:
+  mqtt-data:
+  mqtt-log:
