@@ -362,7 +362,7 @@ class SimulatorState:
                 "rain": int(self.current["rain_raw"]) < 1400,
                 "rssi_dbm": -52,
                 "battery_mv": int(self.current["battery_mv"]),
-                "fw_version": "browser-panel-1.0.0",
+                "fw_version": "esp32-weather-fw-1.1.0",
             }
             if self.mode == "mqtt":
                 if self.client is None:

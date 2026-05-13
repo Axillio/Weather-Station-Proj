@@ -51,7 +51,11 @@ services:
       MQTT_PASSWORD: strong_password
     command: >
       sh -c "touch /mosquitto/data/passwd
+      && chown root:root /mosquitto/data/passwd
+      && chmod 640 /mosquitto/data/passwd
       && mosquitto_passwd -b /mosquitto/data/passwd \"$${MQTT_USERNAME}\" \"$${MQTT_PASSWORD}\"
+      && chown root:root /mosquitto/data/passwd
+      && chmod 640 /mosquitto/data/passwd
       && exec mosquitto -c /mosquitto/config/mosquitto.conf"
     volumes:
       - ./backend/mosquitto/dokploy.conf:/mosquitto/config/mosquitto.conf:ro
@@ -64,6 +68,24 @@ services:
       iot-network:
         aliases:
           - mqtt
+    restart: unless-stopped
+
+  mqtt-monitor:
+    image: eclipse-mosquitto:2
+    command:
+      - sh
+      - -c
+      - >
+        until mosquitto_sub -h mqtt -p 1883 -u weather_device -P strong_password
+        -t 'weather/station/#' -v; do
+        echo '[mqtt-monitor] subscriber disconnected; retrying in 2s';
+        sleep 2;
+        done
+    depends_on:
+      mqtt:
+        condition: service_started
+    networks:
+      - iot-network
     restart: unless-stopped
 
   mqtt-simulator:

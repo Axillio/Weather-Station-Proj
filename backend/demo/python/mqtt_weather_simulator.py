@@ -71,7 +71,7 @@ class SensorState:
             "rain": self.rain_raw < 1400,
             "rssi_dbm": self.rssi_dbm,
             "battery_mv": self.battery_mv,
-            "fw_version": "python-sim-1.1.0",
+            "fw_version": "esp32-weather-fw-1.1.0",
         }
 
 
@@ -136,7 +136,7 @@ def main() -> int:
 
     client = mqtt.Client(
         mqtt.CallbackAPIVersion.VERSION2,
-        client_id=f"python-sim-{config.device_id}",
+        client_id=f"esp32-{config.device_id}",
         transport=config.mqtt_transport,
     )
     if config.mqtt_username:
