@@ -12,6 +12,7 @@ import sys
 import time
 from dataclasses import dataclass
 
+import httpx
 import paho.mqtt.client as mqtt
 
 
@@ -27,6 +28,7 @@ class SimConfig:
     device_id: str
     interval: float
     start_seq: int
+    api_base_url: str | None
 
 
 @dataclass
@@ -98,6 +100,32 @@ def publish_status(client: mqtt.Client, topic: str, device_id: str, status: str)
     client.publish(topic, json.dumps(payload), qos=1, retain=False)
 
 
+def resolve_start_seq(config: SimConfig) -> int:
+    if not config.api_base_url:
+        return config.start_seq
+
+    url = f"{config.api_base_url.rstrip('/')}/api/v1/history"
+    for attempt in range(1, 11):
+        try:
+            response = httpx.get(url, params={"device_id": config.device_id, "limit": 5000}, timeout=5.0)
+            if response.status_code == 404:
+                return config.start_seq
+            response.raise_for_status()
+            rows = response.json()
+            if not isinstance(rows, list):
+                return config.start_seq
+            seqs = [row.get("seq") for row in rows if isinstance(row, dict) and isinstance(row.get("seq"), int)]
+            next_seq = max(seqs, default=config.start_seq - 1) + 1
+            print(f"[SEQ] starting at seq={next_seq}", flush=True)
+            return max(config.start_seq, next_seq)
+        except Exception as exc:  # noqa: BLE001
+            print(f"[SEQ] unable to query backend on attempt {attempt}: {exc}", flush=True)
+            time.sleep(min(attempt * 2, 10))
+
+    print(f"[SEQ] falling back to configured start seq={config.start_seq}", flush=True)
+    return config.start_seq
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description="Publish fake weather station readings to MQTT.")
     parser.add_argument("--mqtt-host", default="broker.hivemq.com")
@@ -110,6 +138,7 @@ def main() -> int:
     parser.add_argument("--device-id", default="ws-esp32-001")
     parser.add_argument("--interval", type=float, default=5.0)
     parser.add_argument("--start-seq", type=int, default=1)
+    parser.add_argument("--api-base-url", default=None, help="Backend URL used to continue after the latest stored seq")
     args = parser.parse_args()
 
     config = SimConfig(
@@ -123,6 +152,7 @@ def main() -> int:
         device_id=args.device_id,
         interval=args.interval,
         start_seq=args.start_seq,
+        api_base_url=args.api_base_url,
     )
     topics = build_topics(config.device_id)
     running = True
@@ -181,7 +211,7 @@ def main() -> int:
 
     client.loop_start()
 
-    seq = config.start_seq
+    seq = resolve_start_seq(config)
     sensor = SensorState()
     try:
         while running:

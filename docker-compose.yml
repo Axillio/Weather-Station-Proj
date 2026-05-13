@@ -51,11 +51,11 @@ services:
       MQTT_PASSWORD: strong_password
     command: >
       sh -c "touch /mosquitto/data/passwd
-      && chown root:root /mosquitto/data/passwd
-      && chmod 644 /mosquitto/data/passwd
+      && chown mosquitto:mosquitto /mosquitto/data/passwd
+      && chmod 600 /mosquitto/data/passwd
       && mosquitto_passwd -b /mosquitto/data/passwd \"$${MQTT_USERNAME}\" \"$${MQTT_PASSWORD}\"
-      && chown root:root /mosquitto/data/passwd
-      && chmod 644 /mosquitto/data/passwd
+      && chown mosquitto:mosquitto /mosquitto/data/passwd
+      && chmod 600 /mosquitto/data/passwd
       && exec mosquitto -c /mosquitto/config/mosquitto.conf"
     volumes:
       - ./backend/mosquitto/dokploy.conf:/mosquitto/config/mosquitto.conf:ro
@@ -107,6 +107,8 @@ services:
       - ws-esp32-001
       - --interval
       - "5"
+      - --api-base-url
+      - http://backend:8000
     depends_on:
       mqtt:
         condition: service_started
