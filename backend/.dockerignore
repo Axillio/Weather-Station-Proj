@@ -1,0 +1,9 @@
+__pycache__
+*.pyc
+.env*
+weather.db
+.git
+.gitignore
+Dockerfile
+demo
+docs

@@ -1,0 +1,62 @@
+services:
+  backend:
+    build:
+      context: ./backend
+    environment:
+      APP_ENV: production
+      DATABASE_URL: sqlite:////app/data/weather.db
+      MQTT_HOST: mqtt
+      MQTT_PORT: 1883
+      MQTT_USERNAME: weather_device
+      MQTT_PASSWORD: strong_password
+      MQTT_TLS: "false"
+      RUN_MQTT_WORKER: "true"
+      OPENWEATHER_API_KEY: your_key_here
+      STATION_LAT: 31.5204
+      STATION_LON: 74.3587
+      JWT_SECRET: replace_this_for_production
+      DEFAULT_DEVICE_ID: ws-esp32-001
+      CORS_ORIGINS: https://iot.axillio.io
+    volumes:
+      - weather-data:/app/data
+    ports:
+      - "8000:8000"
+    depends_on:
+      mqtt:
+        condition: service_started
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        NEXT_PUBLIC_API_BASE_URL: https://iotb.axillio.io
+    environment:
+      API_INTERNAL_URL: http://backend:8000
+    ports:
+      - "3000:3000"
+    depends_on:
+      backend:
+        condition: service_started
+    restart: unless-stopped
+
+  mqtt:
+    image: eclipse-mosquitto:2
+    environment:
+      MQTT_USERNAME: weather_device
+      MQTT_PASSWORD: strong_password
+    command: >
+      sh -c "mosquitto_passwd -b -c /mosquitto/data/passwd \"$${MQTT_USERNAME}\" \"$${MQTT_PASSWORD}\"
+      && exec mosquitto -c /mosquitto/config/mosquitto.conf"
+    volumes:
+      - ./backend/mosquitto/dokploy.conf:/mosquitto/config/mosquitto.conf:ro
+      - mqtt-data:/mosquitto/data
+      - mqtt-log:/mosquitto/log
+    ports:
+      - "1883:1883"
+    restart: unless-stopped
+
+volumes:
+  weather-data:
+  mqtt-data:
+  mqtt-log:
