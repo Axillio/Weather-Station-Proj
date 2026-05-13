@@ -58,6 +58,32 @@ services:
       - 3000
     restart: unless-stopped
 
+  mqtt-simulator:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.simulator
+    command:
+      - python
+      - demo/python/mqtt_weather_simulator.py
+      - --mqtt-host
+      - mqtt
+      - --mqtt-port
+      - "1883"
+      - --mqtt-username
+      - weather_device
+      - --mqtt-password
+      - strong_password
+      - --device-id
+      - ws-esp32-001
+      - --interval
+      - "5"
+    depends_on:
+      mqtt:
+        condition: service_started
+      backend:
+        condition: service_started
+    restart: unless-stopped
+
 volumes:
   weather-data:
   mqtt-data:

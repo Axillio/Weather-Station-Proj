@@ -23,6 +23,10 @@ So the demo chain becomes:
 
 `python simulator -> MQTT broker -> FastAPI backend -> dashboard`
 
+In Dokploy, the root `docker-compose.yml` can run this automatically as:
+
+`mqtt-simulator container -> mqtt container -> backend container -> dashboard`
+
 ## Run It
 
 Use the same Python environment as the backend:
@@ -104,6 +108,7 @@ python demo/python/mqtt_weather_control_panel.py \
 - device ID: `ws-esp32-001`
 - topic: `weather/station/ws-esp32-001/data`
 - publish interval: 5 seconds
+- generated values use random drift for temperature, humidity, pressure, rain, RSSI, and battery
 
 ## Useful Options
 

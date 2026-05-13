@@ -5,5 +5,4 @@ weather.db
 .git
 .gitignore
 Dockerfile
-demo
 docs
