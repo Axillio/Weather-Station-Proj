@@ -21,9 +21,6 @@ services:
       - weather-data:/app/data
     ports:
       - "8000:8000"
-    depends_on:
-      mqtt:
-        condition: service_started
     restart: unless-stopped
 
   frontend:
