@@ -19,8 +19,8 @@ services:
       CORS_ORIGINS: https://iot.axillio.io
     volumes:
       - weather-data:/app/data
-    ports:
-      - "8000:8000"
+    expose:
+      - 8000
     restart: unless-stopped
 
   frontend:
@@ -30,8 +30,8 @@ services:
         NEXT_PUBLIC_API_BASE_URL: https://iotb.axillio.io
     environment:
       API_INTERNAL_URL: http://backend:8000
-    ports:
-      - "3000:3000"
+    expose:
+      - 3000
     depends_on:
       backend:
         condition: service_started
