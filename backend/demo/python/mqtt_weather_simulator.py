@@ -162,8 +162,23 @@ def main() -> int:
     client.on_connect = on_connect
     client.on_message = on_message
 
-    print(f"[MQTT] connecting to {config.mqtt_host}:{config.mqtt_port} via {config.mqtt_transport}")
-    client.connect(config.mqtt_host, config.mqtt_port, keepalive=60)
+    retry_delay = 2.0
+    while running:
+        try:
+            print(
+                f"[MQTT] connecting to {config.mqtt_host}:{config.mqtt_port} via {config.mqtt_transport}",
+                flush=True,
+            )
+            client.connect(config.mqtt_host, config.mqtt_port, keepalive=60)
+            break
+        except OSError as exc:
+            print(f"[MQTT] connection failed: {exc}; retrying in {retry_delay:.0f}s", flush=True)
+            time.sleep(retry_delay)
+            retry_delay = min(retry_delay * 1.5, 30.0)
+
+    if not running:
+        return 0
+
     client.loop_start()
 
     seq = config.start_seq

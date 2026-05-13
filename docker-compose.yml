@@ -24,6 +24,8 @@ services:
     depends_on:
       mqtt:
         condition: service_started
+    networks:
+      - iot-network
     restart: unless-stopped
 
   frontend:
@@ -38,6 +40,8 @@ services:
     depends_on:
       backend:
         condition: service_started
+    networks:
+      - iot-network
     restart: unless-stopped
 
   mqtt:
@@ -56,6 +60,10 @@ services:
     expose:
       - 1883
       - 3000
+    networks:
+      iot-network:
+        aliases:
+          - mqtt
     restart: unless-stopped
 
   mqtt-simulator:
@@ -82,9 +90,15 @@ services:
         condition: service_started
       backend:
         condition: service_started
+    networks:
+      - iot-network
     restart: unless-stopped
 
 volumes:
   weather-data:
   mqtt-data:
   mqtt-log:
+
+networks:
+  iot-network:
+    driver: bridge
